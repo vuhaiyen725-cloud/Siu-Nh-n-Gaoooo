@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siêu Nhân Gao Đỏ - Chiến Binh Phát Âm Tiếng Anh</title>
+    <!-- Tailwind CSS for modern layouts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for friendly rounded typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for cute icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: radial-gradient(circle, #ffebeb 0%, #fcd3d3 100%);
+            overflow-x: hidden;
+        }
+        h1, h2, h3, .font-kids {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* 3D Flashcard styles */
+        .flashcard-container {
+            perspective: 1000px;
+        }
+        .flashcard {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flashcard.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+        /* Animations for characters */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
+        }
+        .animate-bounce-custom {
+            animation: bounce 2s infinite ease-in-out;
+        }
+        .animate-float-slow {
+            animation: float-slow 4s infinite ease-in-out;
+        }
+        /* Kick animation for Hero */
+        @keyframes gao-kick {
+            0% { transform: translateX(0) scale(1); }
+            20% { transform: translateX(-20px) rotate(-10deg) scale(0.9); }
+            50% { transform: translateX(180px) rotate(35deg) scale(1.3); }
+            80% { transform: translateX(180px) rotate(35deg) scale(1.3); }
+            100% { transform: translateX(0) scale(1); }
+        }
+        .animate-kick {
+            animation: gao-kick 0.9s ease-out forwards;
+        }
+        /* Monster hurt animation */
+        @keyframes monster-hurt {
+            0% { transform: scale(1) rotate(0); filter: none; }
+            20% { transform: scale(0.9) rotate(-10deg); filter: hue-rotate(90deg) brightness(1.5); }
+            40% { transform: scale(1.1) rotate(15deg) translateX(30px); }
+            100% { transform: scale(0) rotate(180deg) translateY(150px); opacity: 0; }
+        }
+        .animate-hurt {
+            animation: monster-hurt 1s ease-out forwards;
+        }
+        /* Shake animation for incorrect answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative select-none">
+    
+    <!-- Confetti canvas for victory animations -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Custom Kid-friendly Alert Modal (No native alert() allowed) -->
+    <div id="custom-alert" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl border-8 border-red-500 max-w-sm w-full p-6 text-center shadow-2xl transform transition-transform duration-300 scale-100">
+            <div class="text-yellow-500 text-5xl mb-3">
+                <i class="fa-solid fa-circle-exclamation animate-bounce"></i>
+            </div>
+            <h3 class="font-kids text-2xl text-red-600 mb-2">THÔNG BÁO!</h3>
+            <p id="custom-alert-message" class="text-gray-700 text-base font-bold mb-5 leading-relaxed">Nội dung thông báo ở đây...</p>
+            <button onclick="closeCustomAlert()" class="bg-gradient-to-r from-red-600 to-rose-600 text-white font-kids text-lg px-8 py-2.5 rounded-xl shadow-md border-b-4 border-red-800 hover:from-red-500 hover:to-rose-500 active:border-b-0 active:translate-y-1 transition duration-75">
+                ĐỒNG Ý <i class="fa-solid fa-check ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Status Bar & Health Indicators -->
+    <header class="w-full max-w-4xl bg-white/90 backdrop-blur-md rounded-2xl shadow-xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 border-4 border-red-500 z-10">
+        <div class="flex items-center gap-3">
+            <span class="bg-red-600 text-white font-kids text-lg px-4 py-1.5 rounded-full shadow-inner border border-white">SIÊU NHÂN GAO ĐỎ</span>
+            <div class="flex items-center gap-1 bg-red-100 px-3 py-1 rounded-full border border-red-200">
+                <i class="fa-solid fa-heart text-red-500 animate-pulse"></i>
+                <div class="w-24 h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="hero-hp-bar" class="h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-300 w-full"></div>
+                </div>
+                <span id="hero-hp-text" class="text-xs font-bold text-red-700 ml-1">100%</span>
+            </div>
+        </div>
+        
+        <!-- Progress Indicator -->
+        <div class="flex flex-col items-center gap-1 w-full md:w-auto">
+            <div class="flex justify-between w-full text-xs font-bold text-red-600 px-1">
+                <span id="question-index-text">Câu hỏi: 1 / 10</span>
+                <span id="score-text">Điểm: 0</span>
+            </div>
+            <div class="w-48 md:w-64 h-3 bg-red-100 rounded-full overflow-hidden border border-red-200">
+                <div id="progress-bar" class="h-full bg-red-600 rounded-full transition-all duration-300" style="width: 10%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN INTERACTIVE CONTAINER -->
+    <main class="w-full max-w-4xl flex-1 flex flex-col justify-center my-6 z-10">
+        
+        <!-- INTRO SCREEN -->
+        <div id="screen-intro" class="bg-white rounded-3xl shadow-2xl p-6 md:p-10 border-8 border-red-600 text-center flex flex-col items-center gap-6 max-w-2xl mx-auto">
+            <div class="relative">
+                <div class="hero-image-container w-44 h-44 flex items-center justify-center">
+                    <img src="image_ca3d94.png" alt="Super Red" class="w-44 h-44 object-contain animate-bounce-custom drop-shadow-2xl" onerror="handleHeroImageError(this, 'large')">
+                </div>
+                <div class="absolute -top-3 -right-3 bg-yellow-400 text-red-900 font-kids text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white transform rotate-12 animate-pulse">GAO ĐỎ!</div>
+            </div>
+            
+            <h1 class="text-3xl md:text-4xl font-kids text-red-600 leading-tight">CHIẾN BINH PHÁT ÂM GAO ĐỎ</h1>
+            
+            <div class="bg-red-50 rounded-2xl p-4 md:p-6 text-left border border-red-100 shadow-inner">
+                <h3 class="text-lg font-bold text-red-800 mb-2"><i class="fa-solid fa-gamepad mr-2"></i> Luật chơi siêu đơn giản:</h3>
+                <ul class="space-y-3 text-gray-700 text-sm md:text-base">
+                    <li class="flex items-start gap-2">
+                        <span class="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold shrink-0 mt-0.5 text-xs">1</span>
+                        <span>Lật thẻ Flashcard để xem hình ảnh và nghĩa của từ tiếng Anh lớp 3.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold shrink-0 mt-0.5 text-xs">2</span>
+                        <span>Nhấn nút <strong class="text-red-600">"Nghe Phát Âm"</strong> để nghe giọng đọc mẫu.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold shrink-0 mt-0.5 text-xs">3</span>
+                        <span>Bấm giữ micro và <strong>phát âm thật rõ</strong>! Trả lời đúng, Gao Đỏ sẽ đá bay quái vật!</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <button onclick="startGame()" class="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-kids text-xl md:text-2xl px-10 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition duration-150 border-b-4 border-red-800 active:border-b-0 active:translate-y-0 w-full md:w-auto">
+                SẴN SÀNG CHIẾN ĐẤU! <i class="fa-solid fa-bolt ml-2 text-yellow-300"></i>
+            </button>
+        </div>
+
+        <!-- PLAYING SCREEN -->
+        <div id="screen-play" class="hidden flex flex-col gap-6 w-full">
+            
+            <!-- Battle Arena Panel -->
+            <div class="grid grid-cols-2 bg-gradient-to-b from-sky-400 to-sky-200 rounded-3xl p-6 shadow-xl border-4 border-white relative overflow-hidden h-48 md:h-60 items-end">
+                <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-emerald-500 to-green-400"></div>
+                
+                <!-- Hero Side (Left) -->
+                <div class="flex flex-col items-center justify-end z-10 h-full relative">
+                    <div id="hero-sprite" class="transition-transform duration-300 origin-bottom transform flex items-center justify-center">
+                        <img src="image_ca3d94.png" alt="Hero" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg" onerror="handleHeroImageError(this, 'small')">
+                    </div>
+                    <span class="bg-red-600/90 text-white font-kids text-xs px-2.5 py-0.5 rounded-full shadow border border-white mt-1">Gao Đỏ</span>
+                </div>
+                
+                <!-- Monster Side (Right) -->
+                <div class="flex flex-col items-center justify-end z-10 h-full relative">
+                    <!-- Speech Bubble for Monster -->
+                    <div id="monster-bubble" class="absolute -top-4 bg-white text-gray-800 text-xs font-bold px-3 py-1.5 rounded-xl shadow-lg border border-gray-200 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-white transition-opacity duration-300 opacity-0 max-w-[120px] text-center">
+                        Grrr... Đố phát âm được!
+                    </div>
+                    <div id="monster-sprite" class="transition-transform duration-300 origin-bottom transform animate-bounce-custom">
+                        <!-- Dynamic cute inline SVGs for monsters -->
+                        <div id="monster-svg-holder"></div>
+                    </div>
+                    <span id="monster-name" class="bg-purple-700/95 text-white font-kids text-xs px-2.5 py-0.5 rounded-full shadow border border-white mt-1">Quái Thạch</span>
+                </div>
+
+                <!-- Battle VS Text effect -->
+                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-400 text-red-600 border-4 border-white font-kids px-3 py-1 rounded-full shadow-lg transform rotate-12 z-20 text-xs md:text-sm animate-pulse">
+                    CHỐNG QUÁI VẬT!
+                </div>
+            </div>
+
+            <!-- Flashcard Section -->
+            <div class="flex justify-center w-full my-2">
+                <div class="flashcard-container w-full max-w-sm h-64 cursor-pointer" onclick="flipCard()">
+                    <div id="main-flashcard" class="flashcard relative w-full h-full rounded-3xl shadow-xl transform duration-500">
+                        
+                        <!-- FRONT SIDE: English Word -->
+                        <div class="flashcard-front bg-white border-4 border-red-600 rounded-3xl flex flex-col justify-between p-6 items-center shadow-lg">
+                            <div class="w-full flex justify-between items-center text-xs text-red-500 font-bold">
+                                <span><i class="fa-solid fa-graduation-cap"></i> Tiếng Anh Lớp 3</span>
+                                <span>Lật để xem nghĩa <i class="fa-solid fa-rotate-right ml-1"></i></span>
+                            </div>
+                            
+                            <div class="text-center flex-1 flex flex-col justify-center items-center">
+                                <h2 id="word-english" class="text-4xl md:text-5xl font-kids text-red-600 tracking-wide uppercase">APPLE</h2>
+                                <p id="word-ipa" class="text-gray-500 font-mono text-sm md:text-base mt-2">/ˈæp.əl/</p>
+                            </div>
+                            
+                            <!-- Help Tip / Listen Button -->
+                            <div class="w-full flex justify-center gap-2">
+                                <button onclick="playTTS(event)" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-4 py-2 rounded-xl text-sm border border-red-200 flex items-center gap-2 transition active:scale-95">
+                                    <i class="fa-solid fa-volume-high text-base"></i> Nghe Giọng Đọc
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- BACK SIDE: Vietnamese translation and hint image -->
+                        <div class="flashcard-back bg-gradient-to-b from-red-600 to-rose-600 border-4 border-white rounded-3xl flex flex-col justify-between p-6 items-center shadow-lg text-white">
+                            <div class="w-full flex justify-between items-center text-xs text-red-100 font-bold">
+                                <span><i class="fa-solid fa-lightbulb"></i> Gợi Ý Từ</span>
+                                <span>Lật lại mặt trước <i class="fa-solid fa-rotate-right ml-1"></i></span>
+                            </div>
+                            
+                            <div class="text-center flex-1 flex flex-col justify-center items-center">
+                                <!-- Dynamic Icon based on Category -->
+                                <div id="card-hint-icon" class="text-5xl md:text-6xl mb-2 text-yellow-300 drop-shadow">
+                                    <i class="fa-solid fa-apple-whole"></i>
+                                </div>
+                                <h3 id="word-vietnamese" class="text-2xl md:text-3xl font-kids text-white">Quả Táo</h3>
+                            </div>
+                            
+                            <div class="bg-white/20 px-4 py-1.5 rounded-full text-xs font-semibold">
+                                Lớp 3 - Từ vựng cơ bản
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls, Speech Recognition & Feedbacks -->
+            <div class="bg-white rounded-2xl shadow-xl p-5 border-4 border-red-500 text-center flex flex-col items-center gap-4">
+                
+                <!-- Listening / Action States -->
+                <div id="speak-action-container" class="w-full flex flex-col items-center gap-3">
+                    <p id="pronunciation-hint" class="text-gray-600 text-sm md:text-base font-bold">
+                        Bấm và giữ chiếc micro màu đỏ, phát âm thật to từ: <span id="hint-word" class="text-red-600 font-kids underline uppercase text-lg">APPLE</span>
+                    </p>
+                    
+                    <!-- Microphone Button -->
+                    <div class="relative flex items-center justify-center">
+                        <button id="btn-mic" 
+                                onmousedown="startListening()" 
+                                onmouseup="stopListening()"
+                                ontouchstart="handleTouchStart(event)"
+                                ontouchend="handleTouchEnd(event)"
+                                class="w-20 h-20 bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl active:scale-95 transition-all duration-150 border-4 border-white select-none">
+                            <i id="mic-icon" class="fa-solid fa-microphone text-3xl"></i>
+                        </button>
+                        
+                        <!-- Pulsating Recording Ring -->
+                        <div id="mic-pulse" class="hidden absolute w-24 h-24 rounded-full border-4 border-red-500 animate-ping opacity-75 pointer-events-none"></div>
+                    </div>
+                    
+                    <span id="recording-status" class="text-sm font-black text-gray-500 uppercase tracking-widest">Nhấn và giữ nút Mic để Nói</span>
+                    
+                    <!-- Action Buttons Row -->
+                    <div class="flex flex-wrap justify-center gap-3 mt-1">
+                        <button onclick="skipQuestion()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold px-4 py-2 rounded-xl text-xs transition active:scale-95 flex items-center gap-1.5 border border-amber-300 shadow-sm">
+                            <i class="fa-solid fa-forward-step text-amber-600 animate-pulse"></i> Bỏ qua câu này
+                        </button>
+                        <button onclick="toggleKeyboardInput()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-xl text-xs transition active:scale-95 flex items-center gap-1.5 border border-gray-300 shadow-sm">
+                            <i class="fa-solid fa-keyboard"></i> Không dùng được Micro?
+                        </button>
+                    </div>
+                    
+                    <!-- Fallback simulated input -->
+                    <div id="fallback-input-area" class="mt-2 text-xs flex flex-col items-center gap-2">
+                        <div id="keyboard-input-group" class="hidden flex gap-2 items-center bg-gray-50 p-2 rounded-xl border border-gray-300">
+                            <input type="text" id="simulated-text" placeholder="Nhập từ bạn phát âm..." class="px-3 py-1.5 text-sm rounded-lg border border-gray-300 focus:outline-none focus:border-red-500">
+                            <button onclick="submitSimulatedPronunciation()" class="bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-red-700 transition">Gửi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback States (Correct / Incorrect) -->
+                <div id="feedback-success" class="hidden w-full flex flex-col items-center gap-3 animate-bounce-custom">
+                    <div class="bg-emerald-500 text-white rounded-2xl px-6 py-4 shadow-lg border-2 border-white flex flex-col items-center gap-1 max-w-md">
+                        <span class="font-kids text-xl"><i class="fa-solid fa-circle-check mr-2"></i>XUẤT SẮC! CHÍNH XÁC!</span>
+                        <p class="text-sm">Gao Đỏ đã hạ đo ván quái vật bằng cú đá phát âm siêu chuẩn!</p>
+                        <p id="user-said-success" class="text-xs bg-black/20 px-3 py-1 rounded-full mt-1">Giọng bạn: "apple"</p>
+                    </div>
+                    
+                    <button onclick="nextQuestion()" class="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-kids text-lg md:text-xl px-12 py-3.5 rounded-2xl shadow-lg border-b-4 border-emerald-700 active:border-b-0 active:translate-y-0.5 transition w-full md:w-auto">
+                        TIẾP THEO <i class="fa-solid fa-forward ml-2"></i>
+                    </button>
+                </div>
+
+                <div id="feedback-fail" class="hidden w-full flex flex-col items-center gap-3">
+                    <div class="bg-amber-500 text-white rounded-2xl px-6 py-4 shadow-lg border-2 border-white flex flex-col items-center gap-1 max-w-md">
+                        <span class="font-kids text-xl"><i class="fa-solid fa-triangle-exclamation mr-2"></i>GẦN ĐÚNG RỒI! THỬ LẠI NÀO!</span>
+                        <p class="text-sm">Hãy cố gắng phát âm thật to và rõ từ vựng này nhé.</p>
+                        <p id="user-said-fail" class="text-xs bg-black/20 px-3 py-1 rounded-full mt-1">Hệ thống nghe thành: "aple"</p>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 w-full justify-center items-center">
+                        <button onclick="retryQuestion()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-kids text-lg md:text-xl px-10 py-3.5 rounded-2xl shadow-lg border-b-4 border-amber-700 active:border-b-0 active:translate-y-0.5 transition w-full sm:w-auto">
+                            THỬ LẠI NGAY <i class="fa-solid fa-rotate-left ml-2 animate-spin"></i>
+                        </button>
+                        <button onclick="skipQuestion()" class="bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-300 hover:to-gray-400 text-white font-kids text-lg md:text-xl px-8 py-3.5 rounded-2xl shadow-lg border-b-4 border-gray-600 active:border-b-0 active:translate-y-0.5 transition w-full sm:w-auto flex items-center justify-center gap-2">
+                            BỎ QUA <i class="fa-solid fa-forward-step"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- OUTRO / SUMMARY SCREEN -->
+        <div id="screen-outro" class="hidden bg-white rounded-3xl shadow-2xl p-6 md:p-10 border-8 border-red-600 text-center flex flex-col items-center gap-6 max-w-2xl mx-auto">
+            <div class="relative">
+                <div class="hero-image-container w-40 h-40 flex items-center justify-center">
+                    <img src="image_ca3d94.png" alt="Super Red Win" class="w-40 h-40 object-contain animate-float-slow" onerror="handleHeroImageError(this, 'large')">
+                </div>
+                <div class="absolute -top-3 -right-3 bg-yellow-400 text-red-900 font-kids text-lg font-bold px-4 py-1.5 rounded-full shadow-lg border-2 border-white transform rotate-12">CHIẾN THẮNG!</div>
+            </div>
+            
+            <h1 class="text-3xl md:text-4xl font-kids text-red-600">BẢO VỆ TRÁI ĐẤT THÀNH CÔNG!</h1>
+            
+            <div class="bg-red-50 rounded-2xl p-6 w-full max-w-md border border-red-100 shadow-inner flex flex-col gap-4">
+                <h3 class="text-lg font-bold text-red-800"><i class="fa-solid fa-trophy mr-1 text-yellow-500"></i> Thành Tích Chiến Đấu:</h3>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded-xl border border-red-200">
+                        <span class="text-xs text-gray-500 uppercase block">Tổng Điểm</span>
+                        <span id="final-score" class="text-3xl font-kids text-red-600">100/100</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-red-200">
+                        <span class="text-xs text-gray-500 uppercase block">Đúng Ngay Lần Đầu</span>
+                        <span id="perfect-count" class="text-3xl font-kids text-emerald-600">8 / 10</span>
+                    </div>
+                </div>
+                
+                <p id="rank-evaluation" class="text-gray-700 font-semibold text-sm md:text-base leading-relaxed">
+                    Bạn là một Siêu Anh Hùng phát âm thực thụ! Toàn bộ quái vật đã bị tiêu diệt hoàn toàn.
+                </p>
+            </div>
+            
+            <button onclick="restartGame()" class="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-kids text-xl px-12 py-4 rounded-2xl shadow-lg border-b-4 border-red-800 active:border-b-0 active:translate-y-0.5 transition w-full md:w-auto">
+                CHƠI LẠI <i class="fa-solid fa-gamepad ml-2"></i>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full text-center text-xs text-red-700 font-bold mt-4 z-10">
+        © 2026 - Phát âm Tiếng Anh Lớp 3 cùng Siêu Nhân Gao Đỏ
+    </footer>
+
+    <script>
+        // GAME DATA (Grade 3 English Vocabulary suited for Vietnam curricula)
+        const vocabularyPool = [
+            { english: "apple", vietnamese: "Quả táo", ipa: "/ˈæp.əl/", icon: "fa-apple-whole", category: "fruit" },
+            { english: "banana", vietnamese: "Quả chuối", ipa: "/bəˈnɑː.nə/", icon: "fa-lemon", category: "fruit" },
+            { english: "cat", vietnamese: "Con mèo", ipa: "/kæt/", icon: "fa-cat", category: "animal" },
+            { english: "dog", vietnamese: "Con chó", ipa: "/dɒɡ/", icon: "fa-dog", category: "animal" },
+            { english: "schoolbag", vietnamese: "Cặp sách", ipa: "/ˈskuːl.bæɡ/", icon: "fa-backpack", category: "school" },
+            { english: "pencil", vietnamese: "Bút chì", ipa: "/ˈpen.səl/", icon: "fa-pencil", category: "school" },
+            { english: "ruler", vietnamese: "Thước kẻ", ipa: "/ˈruː.lər/", icon: "fa-ruler", category: "school" },
+            { english: "book", vietnamese: "Quyển sách", ipa: "/bʊk/", icon: "fa-book", category: "school" },
+            { english: "orange", vietnamese: "Quả cam", ipa: "/ˈɒr.ɪndʒ/", icon: "fa-circle", category: "fruit" },
+            { english: "house", vietnamese: "Ngôi nhà", ipa: "/haʊs/", icon: "fa-house", category: "family" },
+            { english: "father", vietnamese: "Bố", ipa: "/ˈfɑː.ðər/", icon: "fa-user-tie", category: "family" },
+            { english: "mother", vietnamese: "Mẹ", ipa: "/ˈmʌð.ər/", icon: "fa-user-astronaut", category: "family" },
+            { english: "brother", vietnamese: "Anh/Em trai", ipa: "/ˈbrʌð.ər/", icon: "fa-user", category: "family" },
+            { english: "sister", vietnamese: "Chị/Em gái", ipa: "/ˈsɪs.tər/", icon: "fa-user-ninja", category: "family" },
+            { english: "happy", vietnamese: "Vui vẻ", ipa: "/ˈhæp.i/", icon: "fa-face-smile", category: "emotion" },
+            { english: "hello", vietnamese: "Xin chào", ipa: "/heˈləʊ/", icon: "fa-hand-wave", category: "greeting" },
+            { english: "bird", vietnamese: "Con chim", ipa: "/bɜːd/", icon: "fa-crow", category: "animal" },
+            { english: "teacher", vietnamese: "Giáo viên", ipa: "/ˈtiː.tʃər/", icon: "fa-chalkboard-user", category: "school" },
+            { english: "robot", vietnamese: "Người máy", ipa: "/ˈrəʊ.bɒt/", icon: "fa-robot", category: "toy" },
+            { english: "ball", vietnamese: "Quả bóng", ipa: "/bɔːl/", icon: "fa-baseball", category: "toy" }
+        ];
+
+        // SVGs for Monsters (to avoid broken links)
+        const monsterSVGs = [
+            `<svg class="w-20 h-20 md:w-28 md:h-28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="15" y="25" width="70" height="60" rx="30" fill="#a855f7" />
+                <circle cx="35" cy="45" r="8" fill="white" />
+                <circle cx="35" cy="45" r="4" fill="black" />
+                <circle cx="65" cy="45" r="8" fill="white" />
+                <circle cx="65" cy="45" r="4" fill="black" />
+                <ellipse cx="50" cy="65" rx="15" ry="6" fill="#1e1b4b" />
+                <rect x="42" y="65" width="5" height="4" fill="white" />
+                <rect x="53" y="65" width="5" height="4" fill="white" />
+                <path d="M25 15 L35 30 M75 15 L65 30" stroke="#a855f7" stroke-width="6" stroke-linecap="round" />
+            </svg>`,
+            `<svg class="w-20 h-20 md:w-28 md:h-28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="50" cy="55" rx="35" ry="35" fill="#f97316" />
+                <circle cx="50" cy="45" r="16" fill="white" />
+                <circle cx="50" cy="45" r="8" fill="#3b82f6" />
+                <circle cx="50" cy="45" r="4" fill="black" />
+                <path d="M35 70 Q50 85 65 70" stroke="black" stroke-width="4" stroke-linecap="round" fill="none" />
+                <path d="M45 10 L50 25 M55 10 L50 25" stroke="#f97316" stroke-width="8" stroke-linecap="round" />
+            </svg>`,
+            `<svg class="w-20 h-20 md:w-28 md:h-28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 80 L30 35 L70 35 L85 80 Z" fill="#06b6d4" />
+                <circle cx="50" cy="50" r="18" fill="#06b6d4" />
+                <circle cx="35" cy="50" r="6" fill="white" />
+                <circle cx="35" cy="50" r="3" fill="black" />
+                <circle cx="65" cy="50" r="6" fill="white" />
+                <circle cx="65" cy="50" r="3" fill="black" />
+                <path d="M15 35 L28 42 M85 35 L72 42" stroke="#e11d48" stroke-width="8" stroke-linecap="round" />
+                <rect x="40" y="65" width="20" height="6" rx="3" fill="#0f172a" />
+            </svg>`
+        ];
+
+        const monsterNames = ["Quái Tím Tinh Nghịch", "Quái Cam Một Mắt", "Quái Xanh Gai Góc"];
+
+        // Ultimate fallback function: If image_ca3d94.png fails, it dynamically generates an adorable SVG
+        function handleHeroImageError(img, size) {
+            img.onerror = null; // Block infinite execution loops
+            const parent = img.parentElement;
+            if (!parent) return;
+
+            const sizeClasses = size === 'large' ? 'w-44 h-44' : 'w-24 h-24 md:w-32 md:h-32';
+            
+            // Re-render a custom designed red vector superhero that looks like image_ca3d94.png
+            const inlineSVG = `
+                <svg class="${sizeClasses} object-contain animate-bounce-custom drop-shadow-2xl" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Cape -->
+                    <path d="M60,130 C40,150 20,185 45,195 C65,185 80,165 90,140" fill="#b91c1c" />
+                    <path d="M140,130 C160,150 180,185 155,195 C135,185 120,165 110,140" fill="#b91c1c" />
+                    <!-- Body Suit -->
+                    <rect x="72" y="120" width="56" height="55" rx="18" fill="#ef4444" />
+                    <!-- Belt -->
+                    <rect x="68" y="152" width="64" height="10" fill="#e2e8f0" />
+                    <rect x="90" y="148" width="20" height="18" rx="3" fill="#fbbf24" stroke="#ffffff" stroke-width="2" />
+                    <!-- Feet -->
+                    <ellipse cx="82" cy="182" rx="14" ry="7" fill="#b91c1c" />
+                    <ellipse cx="118" cy="182" rx="14" ry="7" fill="#b91c1c" />
+                    <rect x="74" y="177" width="16" height="3" fill="#ffffff" />
+                    <rect x="110" y="177" width="16" height="3" fill="#ffffff" />
+                    <!-- Fist / Glove -->
+                    <circle cx="62" cy="132" r="11" fill="#b91c1c" stroke="#ffffff" stroke-width="2" />
+                    <circle cx="138" cy="132" r="11" fill="#b91c1c" stroke="#ffffff" stroke-width="2" />
+                    <!-- Giant Head -->
+                    <circle cx="100" cy="75" r="54" fill="#ef4444" />
+                    <!-- White Eyes Mask Visor -->
+                    <path d="M58,80 C58,62 142,62 142,80 C142,105 58,105 58,80 Z" fill="#ffffff" />
+                    <!-- Shiny Blue/Slate Eyes -->
+                    <circle cx="82" cy="81" r="13" fill="#1e293b" />
+                    <circle cx="82" cy="77" r="4" fill="#ffffff" />
+                    <circle cx="118" cy="81" r="13" fill="#1e293b" />
+                    <circle cx="118" cy="77" r="4" fill="#ffffff" />
+                    <!-- Cheeks Blush -->
+                    <ellipse cx="68" cy="94" rx="6" ry="3.5" fill="#fca5a5" />
+                    <ellipse cx="132" cy="94" rx="6" ry="3.5" fill="#fca5a5" />
+                    <!-- Smile -->
+                    <path d="M94,97 Q100,103 106,97" stroke="#1e293b" stroke-width="3" stroke-linecap="round" fill="none" />
+                </svg>
+            `;
+            parent.innerHTML = inlineSVG;
+        }
+
+        // --- GAME STATE VARIABLES ---
+        let selectedQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let firstTryCorrectCount = 0;
+        let isFirstTryOfQuestion = true;
+        let gaoRedHP = 100;
+        let isFlipped = false;
+        let isTouchDevice = false;
+
+        // Synchronous tracking variables to prevent SpeechRecognition state issues
+        let isSpeechRecogRunning = false;
+        let speechStartDebounceTimer = null;
+
+        // Web Audio API context
+        let audioCtx = null;
+
+        // Initialize Audio Context on User Interaction to comply with browser Autoplay Policy (essential for GitHub Pages)
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSynthSound(type) {
+            try {
+                initAudioContext();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.1); // G5
+                    gain2.gain.setValueAtTime(0.15, audioCtx.currentTime + 0.1);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    osc2.start();
+                    osc.stop(audioCtx.currentTime + 0.5);
+                    osc2.stop(audioCtx.currentTime + 0.6);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                } else if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.15);
+                }
+            } catch (err) {
+                console.log("Audio synthesis error: ", err);
+            }
+        }
+
+        // Add a click/touch listener to body to unlock audio policies safely on first interaction
+        window.addEventListener('click', () => {
+            initAudioContext();
+        }, { once: true });
+
+        // --- SPEECH DIALOG ALERTS ---
+        function showCustomAlert(msg) {
+            document.getElementById('custom-alert-message').innerText = msg;
+            document.getElementById('custom-alert').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert').classList.add('hidden');
+        }
+
+        // --- SPEECH RECOGNITION CONFIGURATION ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isSpeechRecogRunning = true;
+                updateMicUI(true);
+            };
+
+            recognition.onend = () => {
+                isSpeechRecogRunning = false;
+                updateMicUI(false);
+            };
+
+            recognition.onresult = (event) => {
+                const speechToText = event.results[0][0].transcript;
+                verifyPronunciation(speechToText);
+            };
+
+            recognition.onerror = (event) => {
+                console.warn('Speech recognition error: ' + event.error);
+                isSpeechRecogRunning = false;
+                updateMicUI(false);
+                
+                if (event.error === 'not-allowed') {
+                    showCustomAlert("Micro bị chặn! Bạn hãy cấp quyền micro trên trình duyệt của mình hoặc chọn tính năng 'Không dùng được Micro' phía dưới nhé.");
+                }
+            };
+        } else {
+            console.log("Web Speech API is not supported in this browser.");
+        }
+
+        // --- USER INTERACTION EVENTS ---
+        function handleTouchStart(e) {
+            e.preventDefault();
+            isTouchDevice = true;
+            initAudioContext();
+            startListening();
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            stopListening();
+        }
+
+        function startListening() {
+            if (currentQuestionIndex >= selectedQuestions.length) return;
+            
+            if (isSpeechRecogRunning) {
+                console.warn("Speech recognition is already running. Ignoring duplicated event.");
+                return;
+            }
+
+            if (speechStartDebounceTimer) {
+                clearTimeout(speechStartDebounceTimer);
+            }
+
+            speechStartDebounceTimer = setTimeout(() => {
+                playSynthSound('pop');
+                
+                if (recognition) {
+                    try {
+                        isSpeechRecogRunning = true;
+                        recognition.start();
+                    } catch (e) {
+                        console.error("SpeechRecognition start exception caught: ", e);
+                        isSpeechRecogRunning = false;
+                    }
+                } else {
+                    document.getElementById('keyboard-input-group').classList.remove('hidden');
+                    document.getElementById('recording-status').innerText = "Vui lòng nhập từ vào ô bên dưới";
+                }
+            }, 50);
+        }
+
+        function stopListening() {
+            if (recognition && isSpeechRecogRunning) {
+                try {
+                    recognition.stop();
+                } catch (e) {
+                    console.warn("SpeechRecognition stop exception caught: ", e);
+                }
+            }
+        }
+
+        function updateMicUI(listening) {
+            const micBtn = document.getElementById('btn-mic');
+            const micPulse = document.getElementById('mic-pulse');
+            const micIcon = document.getElementById('mic-icon');
+            const statusText = document.getElementById('recording-status');
+
+            if (listening) {
+                micBtn.classList.add('scale-110', 'from-red-600', 'to-red-800');
+                micPulse.classList.remove('hidden');
+                micIcon.classList.replace('fa-microphone', 'fa-volume-low');
+                statusText.innerText = "Đang lắng nghe... Nói từ tiếng Anh!";
+                statusText.classList.replace('text-gray-500', 'text-red-600');
+            } else {
+                micBtn.classList.remove('scale-110', 'from-red-600', 'to-red-800');
+                micPulse.classList.add('hidden');
+                micIcon.classList.replace('fa-volume-low', 'fa-microphone');
+                statusText.innerText = "Nhấn và giữ nút Mic để Nói";
+                statusText.classList.replace('text-red-600', 'text-gray-500');
+            }
+        }
+
+        // --- PRONUNCIATION ALGORITHMS ---
+        function verifyPronunciation(spokenText) {
+            const currentWord = selectedQuestions[currentQuestionIndex].english.toLowerCase().trim();
+            const cleanedSpoken = spokenText.toLowerCase().trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+
+            // Kids level leniency check
+            const isCorrect = (cleanedSpoken === currentWord) || 
+                              (cleanedSpoken.includes(currentWord)) || 
+                              (isCloseEnough(cleanedSpoken, currentWord));
+
+            if (isCorrect) {
+                handleCorrectAnswer(spokenText);
+            } else {
+                handleIncorrectAnswer(spokenText);
+            }
+        }
+
+        function isCloseEnough(s1, s2) {
+            if (Math.abs(s1.length - s2.length) > 2) return false;
+            if (s1.includes(s2) || s2.includes(s1)) return true;
+            return false;
+        }
+
+        // --- GAME LOOP INITIATOR ---
+        function startGame() {
+            initAudioContext();
+            playSynthSound('pop');
+            const shuffled = [...vocabularyPool].sort(() => 0.5 - Math.random());
+            selectedQuestions = shuffled.slice(0, 10);
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            firstTryCorrectCount = 0;
+            gaoRedHP = 100;
+            
+            document.getElementById('screen-intro').classList.add('hidden');
+            document.getElementById('screen-play').classList.remove('hidden');
+            document.getElementById('screen-outro').classList.add('hidden');
+            
+            updateHPBar();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isFirstTryOfQuestion = true;
+            isFlipped = false;
+            
+            const q = selectedQuestions[currentQuestionIndex];
+            
+            // Set Flashcard elements
+            document.getElementById('main-flashcard').classList.remove('is-flipped');
+            document.getElementById('word-english').innerText = q.english;
+            document.getElementById('word-ipa').innerText = q.ipa;
+            document.getElementById('word-vietnamese').innerText = q.vietnamese;
+            document.getElementById('hint-word').innerText = q.english;
+            
+            const iconContainer = document.getElementById('card-hint-icon');
+            iconContainer.innerHTML = <i class="fa-solid ${q.icon}"></i>;
+            
+            const monsterIdx = currentQuestionIndex % monsterSVGs.length;
+            document.getElementById('monster-svg-holder').innerHTML = monsterSVGs[monsterIdx];
+            document.getElementById('monster-name').innerText = monsterNames[monsterIdx];
+            
+            const monsterSprite = document.getElementById('monster-sprite');
+            monsterSprite.className = "transition-transform duration-300 origin-bottom transform animate-bounce-custom";
+            
+            const heroSprite = document.getElementById('hero-sprite');
+            heroSprite.className = "transition-transform duration-300 origin-bottom transform";
+
+            document.getElementById('monster-bubble').classList.add('opacity-0');
+
+            document.getElementById('speak-action-container').classList.remove('hidden');
+            document.getElementById('feedback-success').classList.add('hidden');
+            document.getElementById('feedback-fail').classList.add('hidden');
+            
+            updateHeader();
+        }
+
+        function updateHeader() {
+            document.getElementById('question-index-text').innerText = Câu hỏi: ${currentQuestionIndex + 1} / 10;
+            document.getElementById('score-text').innerText = Điểm: ${score};
+            document.getElementById('progress-bar').style.width = ${((currentQuestionIndex + 1) / 10) * 100}%;
+        }
+
+        function updateHPBar() {
+            const bar = document.getElementById('hero-hp-bar');
+            bar.style.width = ${gaoRedHP}%;
+            document.getElementById('hero-hp-text').innerText = ${gaoRedHP}%;
+            
+            if (gaoRedHP <= 30) {
+                bar.classList.replace('from-red-500', 'from-amber-500');
+            } else {
+                bar.classList.add('from-red-500');
+            }
+        }
+
+        function flipCard() {
+            playSynthSound('pop');
+            isFlipped = !isFlipped;
+            const card = document.getElementById('main-flashcard');
+            if (isFlipped) {
+                card.classList.add('is-flipped');
+            } else {
+                card.classList.remove('is-flipped');
+            }
+        }
+
+        function playTTS(event) {
+            if (event) event.stopPropagation();
+            
+            const textToSay = selectedQuestions[currentQuestionIndex].english;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(textToSay);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- GAME ACTIONS ---
+        function handleCorrectAnswer(recognizedText) {
+            playSynthSound('correct');
+            
+            document.getElementById('speak-action-container').classList.add('hidden');
+            document.getElementById('feedback-success').classList.remove('hidden');
+            document.getElementById('user-said-success').innerHTML = Giọng bạn: <strong class="text-yellow-300">"${recognizedText}"</strong>;
+
+            if (isFirstTryOfQuestion) {
+                firstTryCorrectCount++;
+                score += 10;
+            } else {
+                score += 5;
+            }
+            document.getElementById('score-text').innerText = Điểm: ${score};
+
+            const heroSprite = document.getElementById('hero-sprite');
+            heroSprite.classList.add('animate-kick');
+            
+            const monsterSprite = document.getElementById('monster-sprite');
+            setTimeout(() => {
+                if (isFirstTryOfQuestion) {
+                    monsterSprite.classList.remove('animate-bounce-custom');
+                    monsterSprite.classList.add('animate-hurt');
+                } else {
+                    monsterSprite.classList.add('animate-shake');
+                    setTimeout(() => monsterSprite.classList.remove('animate-shake'), 500);
+                }
+                createConfetti();
+            }, 450);
+        }
+
+        function handleIncorrectAnswer(recognizedText) {
+            playSynthSound('wrong');
+
+            document.getElementById('speak-action-container').classList.add('hidden');
+            document.getElementById('feedback-fail').classList.remove('hidden');
+            
+            const displaySpoken = recognizedText ? recognizedText : "Chưa nghe rõ...";
+            document.getElementById('user-said-fail').innerHTML = Lắng nghe được: <strong class="text-yellow-200">"${displaySpoken}"</strong>;
+
+            const card = document.getElementById('main-flashcard');
+            card.classList.add('animate-shake');
+            setTimeout(() => card.classList.remove('animate-shake'), 500);
+
+            const bubble = document.getElementById('monster-bubble');
+            bubble.innerText = "Hahaha! Sai rồi kìa!";
+            bubble.classList.remove('opacity-0');
+
+            if (isFirstTryOfQuestion) {
+                gaoRedHP = Math.max(0, gaoRedHP - 15);
+                updateHPBar();
+            }
+            
+            isFirstTryOfQuestion = false;
+
+            if (gaoRedHP === 0) {
+                setTimeout(() => {
+                    gaoRedHP = 20;
+                    updateHPBar();
+                    showCustomAlert("Siêu nhân gục ngã! Bạn nhận thêm sức mạnh từ Trái Đất! +20% HP để tiếp tục chiến đấu!");
+                }, 1000);
+            }
+        }
+
+        function retryQuestion() {
+            playSynthSound('pop');
+            document.getElementById('feedback-fail').classList.add('hidden');
+            document.getElementById('speak-action-container').classList.remove('hidden');
+            document.getElementById('simulated-text').value = "";
+        }
+
+        function skipQuestion() {
+            playSynthSound('pop');
+            document.getElementById('keyboard-input-group').classList.add('hidden');
+            document.getElementById('simulated-text').value = "";
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            playSynthSound('pop');
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < selectedQuestions.length) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            document.getElementById('screen-play').classList.add('hidden');
+            document.getElementById('screen-outro').classList.remove('hidden');
+
+            document.getElementById('final-score').innerText = ${score}/100;
+            document.getElementById('perfect-count').innerText = ${firstTryCorrectCount} / 10;
+
+            const evaluation = document.getElementById('rank-evaluation');
+            if (score >= 90) {
+                evaluation.innerText = "XUẤT SẮC! Bạn đạt cấp độ Cao Thủ Anh Ngữ Siêu Nhân Gao Đỏ! Trái đất an toàn nhờ tài năng phát âm siêu chuẩn của bạn!";
+            } else if (score >= 70) {
+                evaluation.innerText = "TUYỆT VỜI! Bạn là Chiến binh Phát Âm Dũng Cảm. Chỉ cần luyện thêm một chút là bạn sẽ hoàn hảo!";
+            } else {
+                evaluation.innerText = "CỐ GẮNG LÊN! Siêu nhân Gao Đỏ muốn bạn tập luyện nhiều hơn một chút để đánh bại lũ quái vật cứng đầu nhé!";
+            }
+
+            for (let i = 0; i < 5; i++) {
+                setTimeout(createConfetti, i * 400);
+            }
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function toggleKeyboardInput() {
+            const group = document.getElementById('keyboard-input-group');
+            group.classList.toggle('hidden');
+        }
+
+        function submitSimulatedPronunciation() {
+            const text = document.getElementById('simulated-text').value;
+            if (text.trim() === "") return;
+            verifyPronunciation(text);
+        }
+
+        // --- CONFETTI PARTICLE SYSTEM ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 8 + 4;
+                this.speedX = Math.random() * 10 - 5;
+                this.speedY = Math.random() * -15 - 5;
+                this.color = hsl(${Math.random() * 360}, 100%, 50%);
+                this.gravity = 0.4;
+                this.alpha = 1;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.speedY += this.gravity;
+                this.alpha -= 0.015;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createConfetti() {
+            const startX = window.innerWidth / 2;
+            const startY = window.innerHeight * 0.4;
+            for (let i = 0; i < 60; i++) {
+                particles.push(new Particle(startX, startY));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+    </script>
+</body>
+</html>
